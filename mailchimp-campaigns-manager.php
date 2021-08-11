@@ -12,31 +12,29 @@
  * Text Domain: mailchimp_campaigns_manager
  * Domain Path: languages/
  *
- * Import and display your MailChimp campaigns in WordPress with simple shortcodes.
+ * Import and display your Mailchimp campaigns in WordPress with simple shortcodes.
  */
 
 // Exit if accessed directly
 if (!defined('ABSPATH')) {exit;}
 
-define('MCM_PLUGIN_ROOT_DIR', plugin_dir_path(__FILE__));
+define('MCM_TEXT_DOMAIN', 'mailchimp_campaigns_manager');
+define('MCM_ENDPOINT', 'mailchimp-campaigns-manager/v1');
+define('MCM_POST_TYPE', 'campaign');
+define('MCM_ROLE_ID', 'mailchimp_campaigns_manager');
 
-/**
- * Register admin pages.
- */
-function mailchimp_campaigns_manager_init() {
-  if (is_admin()) {
-    // Init the setting page.
-    require_once MCM_PLUGIN_ROOT_DIR . 'src/MailchimpCampaignsManagerSettings.php';
-    new MailchimpCampaignsManagerSettings();
-  }
-}
-add_action('init', 'mailchimp_campaigns_manager_init');
+$src = plugin_dir_path(__FILE__) . 'src/';
+require_once $src . 'MailchimpCampaignsManager.php';
+require_once $src . 'MailchimpCampaignsManagerRest.php';
 
-/**
- * Register REST API routes.
- */
-function mailchimp_campaigns_manager_rest_api_init() {
-  require_once MCM_PLUGIN_ROOT_DIR . 'src/MailchimpCampaignsManagerRest.php';
-  new MailchimpCampaignsManagerRest();
+register_activation_hook(__FILE__, ['MailchimpCampaignsManager', 'add_role']);
+
+add_action('init', ['MailchimpCampaignsManager', 'register_post_type']);
+add_action('init', ['MailchimpCampaignsManager', 'add_role']);
+
+add_action('rest_api_init', ['MailchimpCampaignsManagerRest', 'init']);
+
+if (is_admin() || (defined('WP_CLI') && WP_CLI)) {
+  require_once $src . 'MailchimpCampaignsManagerSettings.php';
+  add_action('init', ['MailchimpCampaignsManagerSettings', 'init']);
 }
-add_action('rest_api_init', 'mailchimp_campaigns_manager_rest_api_init');
